@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      width: 300px;
+      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      margin: 0;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    .header h2 {
+      margin: 0;
+      color: #333;
+      font-size: 18px;
+    }
+    
+    .timer-section {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+    
+    .timer-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    
+    .timer-input {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    
+    .start-timer-btn {
+      background: #ff8800;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    
+    .start-timer-btn:hover {
+      background: #e67700;
+    }
+    
+    .start-timer-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    
+    .timer-status {
+      text-align: center;
+      font-size: 13px;
+      color: #666;
+    }
+    
+    .timer-status.active {
+      color: #ff8800;
+      font-weight: 600;
+    }
+    
+    .remaining-time {
+      font-size: 16px;
+      font-weight: bold;
+      color: #ff8800;
+      text-align: center;
+      margin: 10px 0;
+    }
+    
+    .toggle-section {
+      text-align: center;
+      margin: 20px 0;
+    }
+    
+    .toggle-button {
+      background: #007cff;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      min-width: 120px;
+    }
+    
+    .toggle-button:hover {
+      background: #0056b3;
+      transform: translateY(-1px);
+    }
+    
+    .toggle-button.active {
+      background: #dc3545;
+    }
+    
+    .toggle-button.active:hover {
+      background: #c82333;
+    }
+    
+    .toggle-button:disabled {
+      background: #6c757d;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .status {
+      text-align: center;
+      margin: 15px 0;
+      font-size: 14px;
+    }
+    
+    .status.enabled {
+      color: #dc3545;
+      font-weight: 600;
+    }
+    
+    .status.timer {
+      color: #ff8800;
+      font-weight: 600;
+    }
+    
+    .status.disabled {
+      color: #28a745;
+    }
+    
+    .allowed-sites {
+      margin-top: 20px;
+      padding-top: 15px;
+      border-top: 1px solid #eee;
+    }
+    
+    .allowed-sites h3 {
+      margin: 0 0 10px 0;
+      font-size: 14px;
+      color: #666;
+    }
+    
+    .site-input {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 10px;
+    }
+    
+    .site-input input {
+      flex: 1;
+      padding: 6px 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    
+    .add-button {
+      background: #28a745;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    
+    .add-button:hover {
+      background: #218838;
+    }
+    
+    .add-button:disabled {
+      background: #6c757d;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+    
+    .site-input input:disabled {
+      background: #f8f9fa;
+      color: #6c757d;
+      cursor: not-allowed;
+    }
+    
+    .remove-button:disabled {
+      background: #6c757d !important;
+      cursor: not-allowed !important;
+      opacity: 0.5 !important;
+    }
+    
+    .site-list {
+      max-height: 120px;
+      overflow-y: auto;
+      font-size: 12px;
+    }
+    
+    .site-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .site-item:last-child {
+      border-bottom: none;
+    }
+    
+    .remove-button {
+      background: #dc3545;
+      color: white;
+      border: none;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 10px;
+      cursor: pointer;
+    }
+    
+    .remove-button:hover {
+      background: #c82333;
+    }
+    
+    .timer-presets {
+      display: flex;
+      gap: 5px;
+      margin-top: 10px;
+    }
+    
+    .preset-btn {
+      flex: 1;
+      background: #e9ecef;
+      border: 1px solid #ddd;
+      padding: 5px;
+      border-radius: 4px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    
+    .preset-btn:hover {
+      background: #dee2e6;
+    }
+    
+    .warning {
+      background: #fff3cd;
+      border: 1px solid #ffeaa7;
+      color: #856404;
+      padding: 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      margin: 10px 0;
+    }
+    
+    .loading {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h2>集中モード</h2>
+  </div>
+  
+  <div class="timer-section">
+    <div class="timer-controls" id="timerControls">
+      <input type="number" id="timerInput" class="timer-input" 
+             placeholder="分" min="1" max="480" value="30">
+      <button id="startTimerBtn" class="start-timer-btn">集中開始</button>
+    </div>
+    
+    <div class="timer-presets">
+      <button class="preset-btn" data-minutes="15">15分</button>
+      <button class="preset-btn" data-minutes="30">30分</button>
+      <button class="preset-btn" data-minutes="60">1時間</button>
+      <button class="preset-btn" data-minutes="120">2時間</button>
+    </div>
+    
+    <div id="timerStatus" class="timer-status">
+      タイマー設定可能
+    </div>
+    
+    <div id="remainingTime" class="remaining-time" style="display:none;">
+      <!-- 残り時間表示 -->
+    </div>
+    
+    <div id="timerWarning" class="warning" style="display:none;">
+      ⚠️ 集中モード中は時間終了まで無効化できません
+    </div>
+  </div>
+  
+  <div class="toggle-section">
+    <button id="toggleButton" class="toggle-button">
+      読み込み中...
+    </button>
+  </div>
+  
+  <div id="status" class="status">
+    状態を確認中...
+  </div>
+  
+  <div class="allowed-sites">
+    <h3>許可サイト</h3>
+    
+    <div class="site-input">
+      <input type="text" id="newSiteInput" placeholder="example.com">
+      <button id="addSiteButton" class="add-button">追加</button>
+    </div>
+    
+    <div id="siteList" class="site-list">
+      <!-- サイト一覧がここに表示される -->
+    </div>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>

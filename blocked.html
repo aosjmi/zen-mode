@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>サイトがブロックされています</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 90%;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .icon {
+            text-align: center;
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+        
+        .title {
+            text-align: center;
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-bottom: 30px;
+        }
+        
+        .blocked-url {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            word-break: break-all;
+            font-family: monospace;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .allowed-sites {
+            margin-top: 30px;
+        }
+        
+        .allowed-sites h3 {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #ffd700;
+        }
+        
+        .sites-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .site-card {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+        }
+        
+        .site-card:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .site-card a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1rem;
+        }
+        
+        .site-card a:hover {
+            text-decoration: underline;
+        }
+        
+        .timer-info {
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid rgba(255, 193, 7, 0.5);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .timer-info .timer-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .remaining-time {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #ffd700;
+            margin: 10px 0;
+        }
+        
+        .actions {
+            text-align: center;
+            margin-top: 30px;
+        }
+        
+        .btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 0 10px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+        
+        .btn-primary {
+            background: rgba(0, 123, 255, 0.3);
+            border-color: rgba(0, 123, 255, 0.5);
+        }
+        
+        .btn-primary:hover {
+            background: rgba(0, 123, 255, 0.5);
+        }
+        
+        .loading {
+            text-align: center;
+            opacity: 0.7;
+        }
+        
+        .no-sites {
+            text-align: center;
+            opacity: 0.8;
+            font-style: italic;
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .title {
+                font-size: 1.5rem;
+            }
+            
+            .sites-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">🚫</div>
+        <h1 class="title">サイトがブロックされています</h1>
+        <p class="subtitle">集中モードが有効になっています</p>
+        
+        <div class="blocked-url" id="blockedUrl">
+            <!-- ブロックされたURLがここに表示される -->
+        </div>
+        
+        <div id="timerInfo" class="timer-info" style="display: none;">
+            <div class="timer-icon">⏰</div>
+            <div>集中モード実行中</div>
+            <div id="remainingTime" class="remaining-time">
+                <!-- 残り時間がここに表示される -->
+            </div>
+            <div>時間終了まで無効化できません</div>
+        </div>
+        
+        <div class="allowed-sites">
+            <h3>✅ 利用可能なサイト</h3>
+            <div id="sitesContainer" class="loading">
+                読み込み中...
+            </div>
+        </div>
+        
+        <div class="actions">
+            <button id="refreshBtn" class="btn">更新</button>
+            <a href="chrome-extension://[EXTENSION_ID]/popup.html" class="btn btn-primary" target="_blank">
+                設定を開く
+            </a>
+        </div>
+    </div>
+    
+    <script src="blocked.js"></script>
+</body>
+</html>

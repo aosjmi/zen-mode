@@ -1,0 +1,36 @@
+{
+    "manifest_version": 3,
+    "name": "Allow List Blocker",
+    "version": "1.0",
+    "description": "許可リスト以外のサイトをブロックする拡張機能",
+    
+    "permissions": [
+        "declarativeNetRequest",
+        "storage",
+        "alarms",
+        "notifications"
+    ],
+    
+    "host_permissions": [
+        "<all_urls>"
+    ],
+    
+    "icons": {
+        "48": "icons/border-48.png"
+    },
+    
+    "background": {
+        "scripts": ["background.js"],
+        "persistent": false
+    },
+    
+    "action": {
+        "default_popup": "popup.html",
+        "default_title": "Allow List Blocker"
+    },
+    
+    "web_accessible_resources": [{
+        "resources": ["blocked.html", "blocked.js"],
+        "matches": ["<all_urls>"]
+    }]
+}
