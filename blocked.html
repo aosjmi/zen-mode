@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>サイトがブロックされています</title>
+    <title>Site Blocked</title>
     <style>
         * {
             margin: 0;
@@ -11,25 +11,39 @@
             box-sizing: border-box;
         }
         
+        :root {
+            --bg-primary: #FFFCFD;
+            --bg-secondary: #FEF7F9;
+            --interactive-light: #FFE9F0;
+            --interactive-medium: #FEDCE7;
+            --interactive-dark: #FACEDD;
+            --border-light: #F3BED1;
+            --border-medium: #EAACC3;
+            --border-dark: #E093B2;
+            --solid-primary: #E93D82;
+            --solid-secondary: #DF3478;
+            --text-primary: #CB1D63;
+            --text-dark: #621639;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--bg-primary);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
+            color: var(--text-dark);
         }
         
         .container {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(20px);
-            border-radius: 20px;
+            background: var(--bg-secondary);
+            border-radius: 12px;
             padding: 40px;
             max-width: 600px;
             width: 90%;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 16px rgba(203, 29, 99, 0.1);
+            border: 1px solid var(--border-light);
         }
         
         .icon {
@@ -191,33 +205,33 @@
 <body>
     <div class="container">
         <div class="icon">🚫</div>
-        <h1 class="title">サイトがブロックされています</h1>
-        <p class="subtitle">集中モードが有効になっています</p>
+        <h1 class="title">Site Blocked</h1>
+        <p class="subtitle">Focus mode is active</p>
         
         <div class="blocked-url" id="blockedUrl">
-            <!-- ブロックされたURLがここに表示される -->
+            <!-- Blocked URL will be displayed here -->
         </div>
         
         <div id="timerInfo" class="timer-info" style="display: none;">
             <div class="timer-icon">⏰</div>
-            <div>集中モード実行中</div>
+            <div>Focus mode active</div>
             <div id="remainingTime" class="remaining-time">
-                <!-- 残り時間がここに表示される -->
+                <!-- Remaining time will be displayed here -->
             </div>
-            <div>時間終了まで無効化できません</div>
+            <div>Cannot be disabled until timer expires</div>
         </div>
         
         <div class="allowed-sites">
-            <h3>✅ 利用可能なサイト</h3>
+            <h3>✅ Allowed Sites</h3>
             <div id="sitesContainer" class="loading">
-                読み込み中...
+                Loading...
             </div>
         </div>
         
         <div class="actions">
-            <button id="refreshBtn" class="btn">更新</button>
+            <button id="refreshBtn" class="btn">Refresh</button>
             <a href="chrome-extension://[EXTENSION_ID]/popup.html" class="btn btn-primary" target="_blank">
-                設定を開く
+                Open Settings
             </a>
         </div>
     </div>

@@ -7,19 +7,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     let updateInterval = null;
     
-    // 初期化
     await init();
     
-    // 更新ボタン
     refreshBtn.addEventListener('click', () => {
         location.reload();
     });
     
     async function init() {
-        // ブロックされたURLを表示
         displayBlockedUrl();
         
-        // 拡張機能の状態を取得
         try {
             await loadExtensionStatus();
             await loadAllowedSites();

@@ -1,38 +1,38 @@
-// 許可サイトのデフォルトリスト
+
 const DEFAULT_ALLOWED_SITES = [
-  "github.com",
-  "stackoverflow.com", 
-  "developer.mozilla.org",
-  "docs.google.com",
-  "gmail.com",
-  "google.com",
-  "wikipedia.org",
-  "localhost"
+    "github.com",
+    "developer.mozilla.org",
+    "docs.google.com",
+    "gmail.com",
+    "google.com",
+    "wikipedia.org",
+    "localhost",
+    "git.local",
+    "dictionary.cambridge.org",
+    "claude.ai",
+    "duckduckgo.com",
+    "proton.me"
 ];
 
-// 拡張機能インストール時の初期化
 chrome.runtime.onInstalled.addListener(async () => {
   await chrome.storage.local.set({ 
     blockingEnabled: false,
     allowedSites: DEFAULT_ALLOWED_SITES,
     timerMode: false,
     timerEndTime: null,
-    timerDuration: 30 // デフォルト30分
+    timerDuration: 60
   });
   updateIcon(false);
 });
 
-// 拡張機能開始時（再起動含む）の初期化
 chrome.runtime.onStartup.addListener(async () => {
   await checkTimerStatus();
 });
 
-// Service Worker起動時の初期化
 chrome.runtime.onInstalled.addListener(async () => {
   await checkTimerStatus();
 });
 
-// ポップアップからのメッセージを受信
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log('Received message:', message);
   
@@ -106,14 +106,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   sendResponse({ error: 'Unknown action' });
 });
 
-// アラーム設定
 chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === 'focusTimer') {
     await endTimerMode();
   }
 });
 
-// タイマーモード開始
 async function startTimerMode(durationMinutes) {
   const endTime = Date.now() + (durationMinutes * 60 * 1000);
   
@@ -124,7 +122,6 @@ async function startTimerMode(durationMinutes) {
     timerDuration: durationMinutes
   });
   
-  // アラーム設定
   await chrome.alarms.create('focusTimer', {
     when: endTime
   });
@@ -132,11 +129,10 @@ async function startTimerMode(durationMinutes) {
   await enableAllowListMode();
   updateIcon(true, true);
   
-  console.log(`タイマーモード開始: ${durationMinutes}分間`);
+  console.log(`Time Mode: ${durationMinutes}m`);
   return true;
 }
 
-// タイマーモード終了
 async function endTimerMode() {
   await chrome.storage.local.set({
     blockingEnabled: false,
@@ -150,7 +146,6 @@ async function endTimerMode() {
   
   console.log('タイマーモード終了');
   
-// 通知表示（Firefox対応）
 async function showNotification(title, message) {
   if (chrome.notifications) {
     try {
@@ -161,13 +156,12 @@ async function showNotification(title, message) {
         message: message
       });
     } catch (error) {
-      console.log('通知表示エラー:', error);
+      console.log('error:', error);
     }
   }
 }
 }
 
-// タイマー状態チェック（起動時）
 async function checkTimerStatus() {
   const { timerMode, timerEndTime } = await chrome.storage.local.get(['timerMode', 'timerEndTime']);
   
@@ -175,15 +169,14 @@ async function checkTimerStatus() {
     const now = Date.now();
     
     if (now >= timerEndTime) {
-      // タイマー期限切れ
+
       await endTimerMode();
     } else {
-      // まだタイマー中 - ブロック状態を復元
+
       await chrome.storage.local.set({ blockingEnabled: true });
       await enableAllowListMode();
       updateIcon(true, true);
       
-      // 残り時間でアラーム再設定
       await chrome.alarms.create('focusTimer', {
         when: timerEndTime
       });
@@ -193,7 +186,6 @@ async function checkTimerStatus() {
   }
 }
 
-// 通常のブロック機能切り替え（タイマーモード中は無効）
 async function toggleBlocking() {
   const { timerMode } = await chrome.storage.local.get(['timerMode']);
   
@@ -216,7 +208,6 @@ async function toggleBlocking() {
   return { success: true, enabled: newState };
 }
 
-// 残り時間取得
 async function getRemainingTime() {
   const { timerMode, timerEndTime } = await chrome.storage.local.get(['timerMode', 'timerEndTime']);
   
@@ -225,10 +216,9 @@ async function getRemainingTime() {
   }
   
   const remaining = Math.max(0, timerEndTime - Date.now());
-  return Math.ceil(remaining / 1000); // 秒単位
+  return Math.ceil(remaining / 1000);
 }
 
-// 詳細ステータス取得
 async function getFullStatus() {
   const { blockingEnabled, timerMode, timerDuration } = await chrome.storage.local.get([
     'blockingEnabled', 'timerMode', 'timerDuration'
@@ -241,7 +231,6 @@ async function getFullStatus() {
   };
 }
 
-// 許可リストモード有効化
 async function enableAllowListMode() {
   const { allowedSites } = await chrome.storage.local.get(['allowedSites']);
   
@@ -297,7 +286,6 @@ async function enableAllowListMode() {
   }
 }
 
-// 許可リストモード無効化
 async function disableAllowListMode() {
   try {
     const existingRules = await chrome.declarativeNetRequest.getDynamicRules();
@@ -313,13 +301,11 @@ async function disableAllowListMode() {
   }
 }
 
-// 許可サイト一覧を取得
 async function getAllowedSites() {
   const { allowedSites } = await chrome.storage.local.get(['allowedSites']);
   return allowedSites || DEFAULT_ALLOWED_SITES;
 }
 
-// 許可サイト一覧を更新
 async function updateAllowedSites(newSites) {
   await chrome.storage.local.set({ allowedSites: newSites });
   
@@ -331,7 +317,6 @@ async function updateAllowedSites(newSites) {
   return true;
 }
 
-// 拡張機能アイコンの更新
 function updateIcon(enabled, isTimer) {
   const badgeText = enabled ? (isTimer ? "⏰" : "ON") : "";
   const badgeColor = enabled ? (isTimer ? "#ff8800" : "#ff4444") : "#666666";
