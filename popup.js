@@ -1,4 +1,9 @@
 document.addEventListener('DOMContentLoaded', async () => {
+  const statusDiv = document.getElementById('status');
+  const newSiteInput = document.getElementById('newSiteInput');
+  const addSiteButton = document.getElementById('addSiteButton');
+  const siteList = document.getElementById('siteList');
+  
   // Timer elements
   const timerInput = document.getElementById('timerInput');
   const startTimerBtn = document.getElementById('startTimerBtn');
@@ -7,24 +12,26 @@ document.addEventListener('DOMContentLoaded', async () => {
   const timerWarning = document.getElementById('timerWarning');
   const timerControls = document.getElementById('timerControls');
   
+  let allowedSites = [];
   let updateInterval = null;
   
-  // Initialize UI
-  await updateUI();
-  
-  // Preset buttons event listeners
+  // Preset buttons
   document.querySelectorAll('.preset-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       timerInput.value = btn.dataset.minutes;
     });
   });
   
-  // Start timer button
+  // Initialize
+  await updateUI();
+  await loadAllowedSites();
+  
+  // Timer start button
   startTimerBtn.addEventListener('click', async () => {
     const duration = parseInt(timerInput.value);
     
-    if (!duration || duration < 1 || duration > 480) {
-      alert('Please set duration between 1 and 480 minutes');
+    if (!duration || duration < 1 || duration > 720) {
+      alert('Please set duration between 1 and 720 minutes');
       return;
     }
     
@@ -45,10 +52,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     
     startTimerBtn.disabled = false;
-    startTimerBtn.textContent = 'Start';
+    startTimerBtn.textContent = 'Start Focus';
   });
   
-  // Start timer countdown
+  // Site management
+  addSiteButton.addEventListener('click', addSite);
+  newSiteInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      addSite();
+    }
+  });
+  
+  // Timer countdown
   function startTimerCountdown() {
     if (updateInterval) {
       clearInterval(updateInterval);
@@ -84,50 +99,207 @@ document.addEventListener('DOMContentLoaded', async () => {
       timeString = `${minutes}:${secs.toString().padStart(2, '0')}`;
     }
     
-    remainingTime.textContent = timeString;
+    remainingTime.textContent = `Remaining: ${timeString}`;
     remainingTime.style.display = 'block';
   }
   
-  // Update UI based on current status
+  // UI update
   async function updateUI() {
     try {
       const status = await sendMessage({ action: 'getStatus' });
-      const { timerMode } = status;
+      const { blockingEnabled, timerMode } = status;
       
+      // Timer state display
       if (timerMode) {
-        // Timer mode active
         timerStatus.textContent = '🔥 Focus mode active';
         timerStatus.className = 'timer-status active';
         timerWarning.style.display = 'block';
         timerControls.style.display = 'none';
         
-        // Get and display remaining time
+        // Disable site management UI
+        newSiteInput.disabled = true;
+        newSiteInput.placeholder = 'Cannot add during focus mode';
+        addSiteButton.disabled = true;
+        addSiteButton.textContent = 'Cannot Add';
+        
+        // Initial remaining time display
         const remainingSeconds = await sendMessage({ action: 'getRemainingTime' });
         if (remainingSeconds > 0) {
           updateRemainingTimeDisplay(remainingSeconds);
           startTimerCountdown();
         }
       } else {
-        // Timer mode inactive
-        timerStatus.textContent = 'Ready to focus';
+        timerStatus.textContent = 'Timer ready';
         timerStatus.className = 'timer-status';
         timerWarning.style.display = 'none';
-        timerControls.style.display = 'block';
+        timerControls.style.display = 'flex';
         remainingTime.style.display = 'none';
+        
+        // Enable site management UI
+        newSiteInput.disabled = false;
+        newSiteInput.placeholder = 'example.com';
+        addSiteButton.disabled = false;
+        addSiteButton.textContent = 'Add';
         
         if (updateInterval) {
           clearInterval(updateInterval);
           updateInterval = null;
         }
       }
+      
+      // Status update - only show timer-related information
+      if (timerMode) {
+        statusDiv.textContent = '🔥 Focus mode active';
+        statusDiv.className = 'status timer';
+      } else {
+        statusDiv.textContent = '✅ Ready to focus';
+        statusDiv.className = 'status disabled';
+      }
+      
+      await updateSiteList();
+      
+      // Update remove button states
+      await updateRemoveButtonsState();
     } catch (error) {
       console.error('UI update error:', error);
-      timerStatus.textContent = 'Status fetch error';
-      timerStatus.className = 'timer-status';
+      statusDiv.textContent = 'Status fetch error';
+      statusDiv.className = 'status';
     }
   }
   
-  // Send message to background script
+  // Add site
+  async function addSite() {
+    // Disable adding during timer mode
+    const status = await sendMessage({ action: 'getStatus' });
+    if (status.timerMode) {
+      alert('Cannot add sites during focus mode');
+      return;
+    }
+    
+    const site = newSiteInput.value.trim();
+    if (!site) return;
+    
+    const domain = normalizeDomain(site);
+    if (!domain) {
+      alert('Please enter a valid domain name (e.g., example.com)');
+      return;
+    }
+    
+    if (allowedSites.includes(domain)) {
+      alert('That site is already added');
+      return;
+    }
+    
+    allowedSites.push(domain);
+    await updateAllowedSites();
+    newSiteInput.value = '';
+  }
+  
+  // Remove site
+  async function removeSite(domain) {
+    // Disable removing during timer mode
+    const status = await sendMessage({ action: 'getStatus' });
+    if (status.timerMode) {
+      alert('Cannot remove sites during focus mode');
+      return;
+    }
+    
+    allowedSites = allowedSites.filter(site => site !== domain);
+    await updateAllowedSites();
+  }
+  
+  // Update allowed sites
+  async function updateAllowedSites() {
+    try {
+      await sendMessage({ 
+        action: 'updateAllowedSites', 
+        sites: allowedSites 
+      });
+      renderSiteList();
+    } catch (error) {
+      console.error('Allowed sites update error:', error);
+    }
+  }
+  
+  // Load allowed sites
+  async function loadAllowedSites() {
+    try {
+      allowedSites = await sendMessage({ action: 'getAllowedSites' });
+      renderSiteList();
+    } catch (error) {
+      console.error('Allowed sites load error:', error);
+    }
+  }
+  
+  // Render site list
+  function renderSiteList() {
+    siteList.innerHTML = '';
+    
+    allowedSites.forEach(site => {
+      const siteItem = document.createElement('div');
+      siteItem.className = 'site-item';
+      
+      const siteText = document.createElement('span');
+      siteText.textContent = site;
+      
+      const removeButton = document.createElement('button');
+      removeButton.className = 'remove-button';
+      removeButton.textContent = 'Remove';
+      removeButton.onclick = () => removeSite(site);
+      
+      siteItem.appendChild(siteText);
+      siteItem.appendChild(removeButton);
+      siteList.appendChild(siteItem);
+    });
+    
+    // Disable remove buttons during timer mode
+    updateRemoveButtonsState();
+  }
+  
+  // Update remove button state
+  async function updateRemoveButtonsState() {
+    try {
+      const status = await sendMessage({ action: 'getStatus' });
+      const removeButtons = document.querySelectorAll('.remove-button');
+      
+      removeButtons.forEach(button => {
+        if (status.timerMode) {
+          button.disabled = true;
+          button.textContent = 'Cannot Remove';
+          button.style.opacity = '0.5';
+          button.style.cursor = 'not-allowed';
+        } else {
+          button.disabled = false;
+          button.textContent = 'Remove';
+          button.style.opacity = '1';
+          button.style.cursor = 'pointer';
+        }
+      });
+    } catch (error) {
+      console.error('Remove button state update error:', error);
+    }
+  }
+  
+  // Update site list
+  async function updateSiteList() {
+    await loadAllowedSites();
+  }
+  
+  // Domain normalization
+  function normalizeDomain(input) {
+    let domain = input.replace(/^https?:\/\//, '');
+    domain = domain.replace(/^www\./, '');
+    domain = domain.split('/')[0];
+    domain = domain.split(':')[0];
+    
+    if (!/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(domain) && domain !== 'localhost') {
+      return null;
+    }
+    
+    return domain;
+  }
+  
+  // Send message to background.js
   function sendMessage(message) {
     console.log('Sending message:', message);
     return new Promise((resolve, reject) => {

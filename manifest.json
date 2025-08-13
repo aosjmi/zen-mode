@@ -1,6 +1,6 @@
 {
     "manifest_version": 3,
-    "name": "Allow List Blocker",
+    "name": "Zen Mode",
     "version": "1.0",
     "description": "許可リスト以外のサイトをブロックする拡張機能",
     
@@ -16,7 +16,7 @@
     ],
     
     "icons": {
-        "48": "icons/icon.png"
+        "48": "icons/icon.svg"
     },
     
     "background": {
